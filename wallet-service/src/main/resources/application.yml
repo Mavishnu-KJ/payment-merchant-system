@@ -112,3 +112,7 @@ info:
     java-version: ${java.version}
     description: Payment Wallet System - Microservices Architecture
     author: Mavishnu KJ
+
+feature:
+  redis:
+    enabled: false

@@ -63,3 +63,7 @@ management:
 #http://localhost:8082/actuator/circuitbreakers
 #http://localhost:8083/actuator/circuitbreakers
 #http://localhost:8082/actuator/health
+
+feature:
+  redis:
+    enabled: true

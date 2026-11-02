@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +41,9 @@ public class WalletServiceImpl implements WalletService {
     private final RedisLockService redisLockService;
     private final NotificationServiceClient notificationServiceClient;
     private final CurrentUser currentUser;
+
+    @Value("${feature.redis.enabled:false}")
+    private boolean redisEnabled;
 
     private static final Logger logger = LoggerFactory.getLogger(WalletServiceImpl.class);
     private static final String WALLET_CACHE_KEY = "wallet:";
@@ -273,14 +277,25 @@ public class WalletServiceImpl implements WalletService {
     public WalletResponseDto getWalletWithCache(Long userId) {
         logger.info("getWalletWithCache, userId is {}", userId);
 
+        if (!redisEnabled) {
+            logger.info("getWalletWithCache, Redis disabled by feature flag. Reading from DB for userId: {}", userId);
+            Wallet wallet = walletRepository.findByUserId(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Wallet not found for the userId : " + userId));
+            return modelMapper.map(wallet, WalletResponseDto.class);
+        }
+
         String cacheKey = WALLET_CACHE_KEY + userId;
         logger.info("getWalletWithCache, cacheKey is {}", cacheKey);
 
-        // Step 1: Check Redis Cache
-        WalletResponseDto cachedWallet = (WalletResponseDto) redisTemplate.opsForValue().get(cacheKey);
-        if (cachedWallet != null) {
-            logger.info("getWalletWithCache, Wallet cache hit for userId: {}", userId);
-            return cachedWallet;
+        try {
+            // Step 1: Check Redis Cache
+            WalletResponseDto cachedWallet = (WalletResponseDto) redisTemplate.opsForValue().get(cacheKey);
+            if (cachedWallet != null) {
+                logger.info("getWalletWithCache, Wallet cache hit for userId: {}", userId);
+                return cachedWallet;
+            }
+        } catch (Exception ex) {
+            logger.warn("getWalletWithCache, Redis unavailable. Falling back to DB for userId: {}", userId, ex);
         }
 
         logger.info("getWalletWithCache, Wallet cache miss for userId: {}", userId);
@@ -293,8 +308,12 @@ public class WalletServiceImpl implements WalletService {
         WalletResponseDto walletResponseDto = modelMapper.map(wallet, WalletResponseDto.class);
         logger.info("getWalletWithCache, walletResponseDto is {}", walletResponseDto);
 
-        // Step 3: Cache the result
-        redisTemplate.opsForValue().set(cacheKey, walletResponseDto, 10, TimeUnit.MINUTES); // 10 min TTL
+        // Step 3: Cache the result (best effort)
+        try {
+            redisTemplate.opsForValue().set(cacheKey, walletResponseDto, 10, TimeUnit.MINUTES); // 10 min TTL
+        } catch (Exception ex) {
+            logger.warn("getWalletWithCache, Failed to update Redis cache for userId: {}", userId, ex);
+        }
 
         return walletResponseDto;
     }
@@ -303,11 +322,20 @@ public class WalletServiceImpl implements WalletService {
     public void evictWalletCache(Long userId) {
         logger.info("evictWalletCache, userId is {}", userId);
 
+        if (!redisEnabled) {
+            logger.info("evictWalletCache, Redis disabled by feature flag. Eviction skipped for userId: {}", userId);
+            return;
+        }
+
         String cacheKey = WALLET_CACHE_KEY + userId;
         logger.info("evictWalletCache, cacheKey is {}", cacheKey);
 
-        redisTemplate.delete(cacheKey);
-        logger.info("evictWalletCache, Wallet cache evicted for userId: {}", userId);
+        try {
+            redisTemplate.delete(cacheKey);
+            logger.info("evictWalletCache, Wallet cache evicted for userId: {}", userId);
+        } catch (Exception ex) {
+            logger.warn("evictWalletCache, Failed to evict Redis cache for userId: {}", userId, ex);
+        }
     }
 
     // Fallback method - Must have same return type and first parameter as original method
