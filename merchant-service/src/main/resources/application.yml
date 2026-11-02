@@ -1,0 +1,115 @@
+server:
+  port: 8085      # ← This forces the service to run ONLY on port mentioned
+
+# Optional but useful settings
+Spring:
+  Application:
+    name: merchant-service
+
+# If you have other configs
+merchant-service:
+  url: http://localhost:8085
+
+# secret key for jwt token
+jwt:
+  secret: "PaymentWalletSystemStrongSecretKeyAtLeast64CharsLongAndRandomWithoutUnderScore"
+
+#Disable default security - important
+spring:
+  security:
+    user:
+      name: ""      # Disable default user
+      password: ""
+
+#Feign Configuration
+feign:
+  client:
+    config:
+      user-service:
+        connectTimeout: 5000
+        readTimeout: 5000
+
+#User Service URL (used when running locally without Eureka)
+user-service:
+  url: http://localhost:8081
+
+notification-service:
+  url: http://localhost:8084
+
+#Redis configuration
+#spring: //already in code so commented here
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      # password: yourpassword (if needed)
+      timeout: 2000ms
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000   # 10 minutes (in milliseconds)
+
+#Docker : Spring will automatically pick application-docker.yml
+#spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:default}
+
+# ==================== RESILIENCE4J CONFIG ====================
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCircuit:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50          # Open circuit if 50% of last 10 calls fail
+        waitDurationInOpenState: 10s      # Stay open for 10 seconds
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+      addMoneyCircuit:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
+  retry:
+    instances:
+      addMoneyRetry:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - feign.FeignException
+
+
+# ====================== ACTUATOR CONFIG ======================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,circuitbreakers,retries"   # Only useful and safe endpoints
+  endpoint:
+    health:
+      show-details: always           # Change to 'when-authorized' in production
+    info:
+      access: unrestricted
+    circuitbreakers:
+      enabled: true
+    retries:
+      enabled: true
+
+#Health Check: http://localhost:8085/actuator/health
+#Circuit Breakers: http://localhost:8085/actuator/circuitbreakers
+#Retries: http://localhost:8085/actuator/retries
+#Info: http://localhost:8085/actuator/info
+
+info:
+  app:
+    name: ${spring.application.name}
+    spring-boot-version: ${spring-boot.version}
+    java-version: ${java.version}
+    description: Payment Wallet System - Microservices Architecture
+    author: Mavishnu KJ

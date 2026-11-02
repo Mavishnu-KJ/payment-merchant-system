@@ -16,6 +16,7 @@
         <module>notification-service</module>
         <module>eureka-server</module>
         <module>api-gateway</module>
+        <module>merchant-service</module>
     </modules>
 
     <properties>
