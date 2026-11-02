@@ -64,7 +64,20 @@ services:
       - redis
       - eureka-server
       - user-service
-      - wallet-service
+      - merchant-service
+    restart: unless-stopped
+
+  merchant-service:
+    build: ./merchant-service
+    container_name: merchant-service
+    ports:
+      - "8085:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - redis
+      - eureka-server
+      - user-service
     restart: unless-stopped
 
   notification-service:

@@ -49,11 +49,21 @@ spring:
             - JwtAuthenticationFilter
 
         - id: wallet-service
-          uri: lb://wallet-service
+          uri: lb://merchant-service
           predicates:
             - Path=/api/wallets/**
           filters:
             - RewritePath=/api/wallets/(?<segment>.*), /api/wallets/${segment}
+            - PreserveHostHeader
+            - RateLimitingFilter #If limit exceeded → returns HTTP 429 Too Many Requests
+            - JwtAuthenticationFilter
+
+        - id: merchant-service
+          uri: lb://merchant-service
+          predicates:
+            - Path=/api/merchants/**
+          filters:
+            - RewritePath=/api/merchants/(?<segment>.*), /api/merchants/${segment}
             - PreserveHostHeader
             - RateLimitingFilter #If limit exceeded → returns HTTP 429 Too Many Requests
             - JwtAuthenticationFilter
