@@ -34,6 +34,9 @@ feign:
 merchant-service:
   url: http://localhost:8085
 
+wallet-service:
+  url: http://localhost:8082
+
 notification-service:
   url: http://localhost:8084
 
@@ -54,6 +57,13 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
 
+      merchantServiceCircuit:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
       walletServiceCircuit:
         slidingWindowSize: 10
         failureRateThreshold: 50
@@ -69,12 +79,23 @@ resilience4j:
         permittedNumberOfCallsInHalfOpenState: 3
         automaticTransitionFromOpenToHalfOpenEnabled: true
 
+      payToMerchantCircuit:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+
   retry:
     instances:
       userServiceRetry:
         maxAttempts: 3
         waitDuration: 500ms
       meTransferRetry:
+        maxAttempts: 3
+        waitDuration: 800ms
+      payToMerchantRetry:
         maxAttempts: 3
         waitDuration: 800ms
 

@@ -1,6 +1,7 @@
 package com.example.transactionservice.controller;
 
 import com.example.transactionservice.model.dto.MeTransferRequestDto;
+import com.example.transactionservice.model.dto.PayToMerchantRequestDto;
 import com.example.transactionservice.model.dto.TransactionResponseDto;
 import com.example.transactionservice.model.dto.TransferRequestDto;
 import com.example.transactionservice.security.CurrentUser;
@@ -35,6 +36,19 @@ public class TransactionController {
 
         TransactionResponseDto transactionResponseDto = transactionService.meTransfer(meTransferRequestDto);
         logger.info("meTransfer, transactionResponseDto is {}", transactionResponseDto);
+
+        return ResponseEntity.ok(transactionResponseDto);
+    }
+
+    @PostMapping("/me/pay-merchant")
+    ResponseEntity<TransactionResponseDto> payToMerchant(@Valid @RequestBody PayToMerchantRequestDto payToMerchantRequestDto) {
+        logger.info("payToMerchant, payToMerchantRequestDto is {}", payToMerchantRequestDto);
+
+        String username = currentUser.getCurrentUsername();
+        logger.info("payToMerchant, called by username : {}", username);
+
+        TransactionResponseDto transactionResponseDto = transactionService.payToMerchant(payToMerchantRequestDto);
+        logger.info("payToMerchant, transactionResponseDto is {}", transactionResponseDto);
 
         return ResponseEntity.ok(transactionResponseDto);
     }

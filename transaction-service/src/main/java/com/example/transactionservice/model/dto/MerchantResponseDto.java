@@ -1,15 +1,14 @@
-package com.example.merchantservice.model.dto;
+package com.example.transactionservice.model.dto;
 
 import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Data
-public class WalletCompatResponseDto {
+public class MerchantResponseDto {
     private Long id;
     private Long userId;
-    private BigDecimal balance;
-    private String currency;
+    private BigDecimal availableBalance;
     private String status;
     private String description;
 }

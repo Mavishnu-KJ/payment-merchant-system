@@ -1,6 +1,7 @@
 package com.example.transactionservice.service.impl;
 
 import com.example.transactionservice.client.NotificationServiceClient;
+import com.example.transactionservice.client.MerchantServiceClient;
 import com.example.transactionservice.client.UserServiceClient;
 import com.example.transactionservice.client.WalletServiceClient;
 import com.example.transactionservice.exceptions.InsufficientBalanceException;
@@ -38,6 +39,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final ModelMapper modelMapper;
     private final WalletServiceClient walletServiceClient;
+    private final MerchantServiceClient merchantServiceClient;
     private final UserServiceClient userServiceClient;
     private final NotificationServiceClient notificationServiceClient;
     private final SagaService sagaService;
@@ -149,6 +151,95 @@ public class TransactionServiceImpl implements TransactionService {
 
     }
 
+    @Override
+    @Transactional
+    @CircuitBreaker(name = "payToMerchantCircuit", fallbackMethod = "payToMerchantFallback")
+    @Retry(name = "payToMerchantRetry")
+    public TransactionResponseDto payToMerchant(PayToMerchantRequestDto payToMerchantRequestDto) {
+        logger.info("payToMerchant, payToMerchantRequestDto is {}", payToMerchantRequestDto);
+
+        Long loggedInUserId = currentUser.getCurrentUserId();
+        logger.info("payToMerchant, UserId from header is {}", loggedInUserId);
+
+        if (loggedInUserId == null) {
+            logger.info("payToMerchant, UserId not found in header. Falling back to Feign call");
+            UserResponseDto userResponseDto = userServiceClient.getCurrentUser();
+            logger.info("payToMerchant, userResponseDto is {}", userResponseDto);
+
+            if (userResponseDto == null || userResponseDto.getUserStatus() != UserStatus.ACTIVE) {
+                throw new ResourceNotFoundException("User not found or not active");
+            }
+
+            loggedInUserId = userResponseDto.getUserId();
+            logger.info("payToMerchant, loggedInUserId is {}", loggedInUserId);
+        }
+
+        WalletResponseDto fromWallet = walletServiceClient.getWalletByUserId(loggedInUserId);
+        logger.info("payToMerchant, fromWallet is {}", fromWallet);
+
+        MerchantResponseDto toMerchant = merchantServiceClient.getMerchantById(payToMerchantRequestDto.getMerchantId());
+        logger.info("payToMerchant, toMerchant is {}", toMerchant);
+
+        if (fromWallet == null) {
+            throw new ResourceNotFoundException("Your source wallet not found");
+        }
+
+        if (fromWallet.getStatus() != WalletStatus.ACTIVE) {
+            throw new IllegalStateException("Your source wallet is not active, walletId : " + fromWallet.getId());
+        }
+
+        if (toMerchant == null || toMerchant.getId() == null) {
+            throw new ResourceNotFoundException("Destination merchant not found, merchantId : " + payToMerchantRequestDto.getMerchantId());
+        }
+
+        if (!"ACTIVE".equalsIgnoreCase(toMerchant.getStatus())) {
+            throw new IllegalStateException("Destination merchant is not active, merchantId : " + payToMerchantRequestDto.getMerchantId());
+        }
+
+        if (fromWallet.getBalance().compareTo(payToMerchantRequestDto.getAmount()) < 0) {
+            throw new InsufficientBalanceException("Insufficient balance in source wallet");
+        }
+
+        Long fromWalletId = fromWallet.getId();
+        boolean lockAcquired = walletServiceClient.acquireLock(fromWalletId, 60);
+        if (!lockAcquired) {
+            throw new ResourceConflictException("Due to DistributedLocking, another operation is in progress on this wallet. Please try again later.");
+        }
+        logger.info("payToMerchant, lock acquired for fromWalletId : {}, amount : {}", fromWalletId, payToMerchantRequestDto.getAmount());
+
+        try {
+            walletServiceClient.debit(fromWalletId, payToMerchantRequestDto.getAmount());
+            merchantServiceClient.credit(payToMerchantRequestDto.getMerchantId(), payToMerchantRequestDto.getAmount());
+
+            Transaction transaction = new Transaction();
+            transaction.setTransactionId("TXN-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase());
+            transaction.setFromWalletId(fromWalletId);
+            transaction.setToWalletId(payToMerchantRequestDto.getMerchantId());
+            transaction.setAmount(payToMerchantRequestDto.getAmount());
+            transaction.setType(TransactionType.TRANSFER);
+            transaction.setStatus(TransactionStatus.SUCCESS);
+            transaction.setDescription(payToMerchantRequestDto.getDescription());
+            transaction.setTransactionDate(LocalDateTime.now());
+
+            Transaction savedTransaction = transactionRepository.save(transaction);
+            logger.info("payToMerchant, transaction saved successfully with transactionId {}", savedTransaction.getTransactionId());
+
+            notificationServiceClient.notifyTransfer(loggedInUserId, toMerchant.getUserId(), payToMerchantRequestDto.getAmount(), "SUCCESS");
+
+            return modelMapper.map(savedTransaction, TransactionResponseDto.class);
+        } catch (Exception e) {
+            logger.error("payToMerchant, payment failed for walletId {}. Error: {}", fromWalletId, e.getMessage(), e);
+            throw e;
+        } finally {
+            try {
+                walletServiceClient.releaseLock(fromWalletId);
+                logger.info("payToMerchant, lock released for walletId: {}", fromWalletId);
+            } catch (Exception lockEx) {
+                logger.warn("payToMerchant, failed to release lock for walletId: {}. Error: {}", fromWalletId, lockEx.getMessage());
+            }
+        }
+    }
+
     public Page<TransactionResponseDto> getMyTransactionHistory(int page, int size){
         logger.info("getMyTransactionHistory, page is {}, size is {}", page, size);
 
@@ -220,6 +311,18 @@ public class TransactionServiceImpl implements TransactionService {
         fallback.setDescription("Transfer service is temporarily unavailable. Please try again later.");
         fallback.setStatus(TransactionStatus.FAILED);
         fallback.setAmount(meTransferRequestDto.getAmount());
+
+        return fallback;
+    }
+
+    public TransactionResponseDto payToMerchantFallback(PayToMerchantRequestDto payToMerchantRequestDto, Throwable throwable) {
+        logger.error("payToMerchantFallback, payToMerchant failed. Circuit Breaker opened or retry exhausted. Request: {}",
+                payToMerchantRequestDto, throwable);
+
+        TransactionResponseDto fallback = new TransactionResponseDto();
+        fallback.setDescription("Merchant payment service is temporarily unavailable. Please try again later.");
+        fallback.setStatus(TransactionStatus.FAILED);
+        fallback.setAmount(payToMerchantRequestDto.getAmount());
 
         return fallback;
     }

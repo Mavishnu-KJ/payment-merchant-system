@@ -49,7 +49,7 @@ spring:
             - JwtAuthenticationFilter
 
         - id: wallet-service
-          uri: lb://merchant-service
+          uri: lb://wallet-service
           predicates:
             - Path=/api/wallets/**
           filters:
