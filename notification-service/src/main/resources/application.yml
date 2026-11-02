@@ -16,6 +16,10 @@ jwt:
 
 #Disable default security - important
 spring:
+  application:
+    name: notification-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   security:
     user:
       name: ""      # Disable default user
@@ -38,11 +42,6 @@ wallet-service:
 
 transaction-service:
   url: http://localhost:8083
-
-#Docker : Spring will automatically pick application-docker.yml
-#spring:
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:default}
 
 # ====================== ACTUATOR CONFIG ======================
 management:

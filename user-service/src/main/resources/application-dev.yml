@@ -3,10 +3,10 @@ spring:
     name: user-service
 
   datasource:
-    url: jdbc:h2:mem:userdb
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/payment_merchant_system?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
@@ -15,10 +15,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-
-  h2:
-    console:
-      enabled: true
+        dialect: org.hibernate.dialect.MySQLDialect
 
 server:
   port: 8081
