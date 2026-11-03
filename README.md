@@ -11,6 +11,10 @@ This system allows users to register, manage wallets, transfer money (P2P), and 
 
 All services are independently deployable, communicate via OpenFeign, and are secured through a centralized API Gateway.
 
+## High level flow 
+
+![Business_Flow.jpg](Info/Business_Flow.jpg)
+
 ## ✨ Key Features
 
 - **User Management** (Registration, Login, JWT)
