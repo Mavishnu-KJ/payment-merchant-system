@@ -42,7 +42,7 @@ public class WalletServiceImpl implements WalletService {
     private final NotificationServiceClient notificationServiceClient;
     private final CurrentUser currentUser;
 
-    @Value("${feature.redis.enabled:false}")
+    @Value("${feature.redis.enabled:true}")
     private boolean redisEnabled;
 
     private static final Logger logger = LoggerFactory.getLogger(WalletServiceImpl.class);

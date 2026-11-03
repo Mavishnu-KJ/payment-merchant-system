@@ -17,7 +17,7 @@ public class RedisLockServiceImpl implements RedisLockService {
     private final RedisTemplate<String, Object> redisTemplate;
     private static final Logger logger = LoggerFactory.getLogger(RedisLockServiceImpl.class);
 
-    @Value("${feature.redis.enabled:false}")
+    @Value("${feature.redis.enabled:true}")
     private boolean redisEnabled;
 
     private static final String LOCK_PREFIX = "lock:wallet:";
