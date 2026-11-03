@@ -150,7 +150,6 @@ docker compose up --build
 
 ## 📈 Future Enhancements
 
-- => Integration with real payment gateway (Razorpay/Stripe)
 - => Distributed Tracing with Zipkin/OpenTelemetry
 - => Spring Cloud Config Server
 - => Database migration to PostgreSQL
