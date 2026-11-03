@@ -154,6 +154,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     @CircuitBreaker(name = "payToMerchantCircuit", fallbackMethod = "payToMerchantFallback")
+    //@CircuitBreaker(name = "payToMerchantCircuit")
     @Retry(name = "payToMerchantRetry")
     public TransactionResponseDto payToMerchant(PayToMerchantRequestDto payToMerchantRequestDto) {
         logger.info("payToMerchant, payToMerchantRequestDto is {}", payToMerchantRequestDto);
@@ -320,9 +321,14 @@ public class TransactionServiceImpl implements TransactionService {
                 payToMerchantRequestDto, throwable);
 
         TransactionResponseDto fallback = new TransactionResponseDto();
-        fallback.setDescription("Merchant payment service is temporarily unavailable. Please try again later.");
         fallback.setStatus(TransactionStatus.FAILED);
         fallback.setAmount(payToMerchantRequestDto.getAmount());
+
+        if(throwable.toString().contains("Wallet not found for the userId")){
+            fallback.setDescription("Your userId has no wallet. Please create a wallet and add enough money to transfer");
+        }else{
+            fallback.setDescription("Merchant payment service is temporarily unavailable. Please try again later.");
+        }
 
         return fallback;
     }
