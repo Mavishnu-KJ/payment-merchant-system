@@ -15,8 +15,8 @@ public class SwaggerConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Payment Wallet System API")
-                        .description("A microservices-based Payment Wallet System with User, Wallet & Transaction services")
+                        .title("Payment Merchant System API")
+                        .description("A microservices-based Payment Merchant System with User, Wallet & Transaction services")
                         .version("1.0.0")
                         .contact(new io.swagger.v3.oas.models.info.Contact()
                                 .name("Mavishnu KJ")

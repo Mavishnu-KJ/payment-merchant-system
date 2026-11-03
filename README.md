@@ -1,11 +1,11 @@
 # Payment Gateway & Merchant Management System
-A **distributed microservices-based Payment Wallet System** built using Spring Boot, demonstrating real-world backend architecture, resilience patterns, and transaction management.
+A **distributed microservices-based Payment Merchant System** built using Spring Boot, demonstrating real-world backend architecture, resilience patterns, and transaction management.
 
 **Live Demo** | [Eureka dashboard](http://localhost:8761) (after running)
 
 ## 📋 Project Overview
 
-This project is a **fully functional Payment Wallet System** with multiple microservices communicating via REST and Feign Clients. It demonstrates production-grade practices including distributed transactions, resilience, security, and containerization.
+This project is a **fully functional Payment Merchant System** with multiple microservices communicating via REST and Feign Clients. It demonstrates production-grade practices including distributed transactions, resilience, security, and containerization.
 
 ## ✨ Key Features
 

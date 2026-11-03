@@ -6,7 +6,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Payment Wallet System</name>
+    <name>Payment Merchant System</name>
     <description>Microservices based digital payment wallet</description>
 
     <modules>

@@ -125,5 +125,5 @@ info:
     name: ${spring.application.name}
     spring-boot-version: ${spring-boot.version}
     java-version: ${java.version}
-    description: Payment Wallet System - Microservices Architecture
+    description: Payment Merchant System - Microservices Architecture
     author: Mavishnu KJ
