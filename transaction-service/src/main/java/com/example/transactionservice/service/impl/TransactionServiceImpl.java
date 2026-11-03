@@ -309,9 +309,19 @@ public class TransactionServiceImpl implements TransactionService {
 
         // Safe fallback response
         TransactionResponseDto fallback = new TransactionResponseDto();
-        fallback.setDescription("Transfer service is temporarily unavailable. Please try again later.");
+        //fallback.setDescription("Transfer service is temporarily unavailable. Please try again later.");
         fallback.setStatus(TransactionStatus.FAILED);
         fallback.setAmount(meTransferRequestDto.getAmount());
+
+        if(throwable.toString().contains("Wallet not found for the userId")){
+            fallback.setDescription("Your userId has no wallet. Please create a wallet and add enough money to transfer");
+        }else if(throwable.toString().contains("Wallet not found for the walletId")){
+            fallback.setDescription("Wallet not found for the given wallet Id, please provide valid wallet Id");
+        }else if(throwable.toString().contains("Insufficient balance in source wallet")){
+            fallback.setDescription("FAILED! Insufficient balance in your wallet");
+        }else{
+            fallback.setDescription("Wallet service is temporarily unavailable. Please try again later.");
+        }
 
         return fallback;
     }
@@ -328,6 +338,8 @@ public class TransactionServiceImpl implements TransactionService {
             fallback.setDescription("Your userId has no wallet. Please create a wallet and add enough money to transfer");
         }else if(throwable.toString().contains("Merchant not found for id")){
             fallback.setDescription("Merchant not found for the given merchant Id");
+        }else if(throwable.toString().contains("Insufficient balance in source wallet")){
+            fallback.setDescription("FAILED! Insufficient balance in your wallet");
         }else{
             fallback.setDescription("Merchant payment service is temporarily unavailable. Please try again later.");
         }
