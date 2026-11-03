@@ -80,8 +80,11 @@ cd payment-merchant-system
 
 # Build and run all services
 mvn clean package -DskipTests
-docker compose up --build
+docker compose down
+docker compose up --build eureka-server redis api-gateway user-service wallet-service merchant-service transaction-service notification-service
 ```
+- Note : Using Local MySQL DB
+
 
 ## Access Points
 
