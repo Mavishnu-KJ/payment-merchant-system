@@ -7,7 +7,7 @@
     <packaging>pom</packaging>
 
     <name>Payment Merchant System</name>
-    <description>Microservices based digital payment wallet</description>
+    <description>Microservices based digital payment merchant system</description>
 
     <modules>
         <module>user-service</module>
