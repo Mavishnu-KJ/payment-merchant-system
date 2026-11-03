@@ -326,6 +326,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         if(throwable.toString().contains("Wallet not found for the userId")){
             fallback.setDescription("Your userId has no wallet. Please create a wallet and add enough money to transfer");
+        }else if(throwable.toString().contains("Merchant not found for id")){
+            fallback.setDescription("Merchant not found for the given merchant Id");
         }else{
             fallback.setDescription("Merchant payment service is temporarily unavailable. Please try again later.");
         }
