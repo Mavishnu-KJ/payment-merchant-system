@@ -33,19 +33,18 @@ All services are independently deployable, communicate via OpenFeign, and are se
 
 ## 🛠 Tech Stack
 
-| Layer              | Technology                                          |
-|--------------------|-----------------------------------------------------|
-| Framework          | Spring Boot 3.5.9                                   |
-| Service Discovery  | Eureka Server                                       |
-| API Gateway        | Spring Cloud Gateway                                |
+| Layer             | Technology                                          |
+|-------------------|-----------------------------------------------------|
+| Framework         | Spring Boot 3.5.9                                   |
+| Service Discovery | Eureka Server                                       |
+| API Gateway       | Spring Cloud Gateway                                |
 | Inter-service Call | OpenFeign                                           |
-| Database           | MySQL                                               |
-| Cache & Locking    | Redis                                               |
-| Resilience         | Resilience4j (Circuit Breaker, Retry, Rate Limiter) |
-| Security           | JWT (Centralized at Gateway)                        |
-| Containerization   | Docker + Docker Compose                             |
-| Monitoring         | Spring Boot Actuator                                |
-| Build Tool         | Maven (Multi-module)                                |
+| Database          | MySQL                                               |
+| Cache & Locking   | Redis                                               |
+| Resilience        | Resilience4j (Circuit Breaker, Retry, Rate Limiter) |
+| Security          | JWT (Centralized at Gateway)                        |
+| Containerization  | Docker + Docker Compose                             |
+| Build Tool        | Maven (Multi-module)                                |
 
 ## 🏗 Architecture
 
