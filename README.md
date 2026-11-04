@@ -25,6 +25,7 @@ All services are independently deployable, communicate via OpenFeign, and are se
 - **Distributed Locking** using Redis
 - **Centralized Authentication** at API Gateway
 - **Resilience Patterns** (Circuit Breaker + Retry + Fallback)
+- **Optimistic Locking - @Version** 
 - **Rate Limiting** at Gateway level
 - **Real-time Notifications** (via Notification Service)
 - **Dockerized** deployment with Docker Compose
